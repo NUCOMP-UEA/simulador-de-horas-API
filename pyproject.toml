@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "horas-sim-backend"
+version = "0.1.0"
+description = ""
+authors = ["DFox <vhsdl.eng19@uea.edu.br>"]
+readme = "README.md"
+packages = [{include = "horas_sim_backend"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.100.1"
+uvicorn = {extras = ["standard"], version = "^0.23.2"}
+python-multipart = "^0.0.6"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
