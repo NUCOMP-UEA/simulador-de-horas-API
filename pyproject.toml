@@ -4,15 +4,24 @@ version = "0.1.0"
 description = ""
 authors = ["DFox <vhsdl.eng19@uea.edu.br>"]
 readme = "README.md"
-packages = [{include = "horas_sim_backend"}]
+packages = [{include = "add_hours"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
 fastapi = "^0.100.1"
 uvicorn = {extras = ["standard"], version = "^0.23.2"}
 python-multipart = "^0.0.6"
+python-dotenv = "^1.0.0"
+pydantic = "^2.1.1"
+black = "^23.7.0"
+bson = "^0.5.10"
+motor = "^3.2.0"
 
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+
+[tool.poetry.scripts]
+start = "add_hours.main:start"

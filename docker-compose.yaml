@@ -1,0 +1,13 @@
+version: '3.3'
+services:
+  add-hours-database:
+    image: mongo:6.0.9-rc0-jammy
+    container_name: add-hours-database
+    environment:
+      - MONGO_INITDB_DATABASE=add-hours-db
+      - MONGO_INITDB_ROOT_USERNAME=addhours
+      - MONGO_INITDB_ROOT_PASSWORD=addhours
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./mongo/data:/data/db
