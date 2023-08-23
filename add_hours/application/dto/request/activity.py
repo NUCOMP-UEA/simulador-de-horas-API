@@ -1,27 +1,29 @@
-from datetime import datetime, date
+from datetime import date, datetime
 from enum import Enum
+from typing import Annotated, Optional
 
+from bson import ObjectId
 from pydantic import BaseModel, Field
+
+from add_hours.utils.pydantic_object_id import PydanticObjectId
 
 
 class ActivityRequest(BaseModel):
-    activity: str
+    activity: Annotated[ObjectId, PydanticObjectId]
     category: str
     area: str
     date_: date = Field(alias="date")
-    accomplished_workload: int = Field(alias="accomplishedWorkload")
-    posted_workload: int = Field(alias="postedWorkload")
+    accomplished_workload: Optional[int] = Field(alias="accomplishedWorkload")
 
     class Config:
         populate_by_name = True
         json_schema_extra = {
             "example": {
-                "activity": "Activity 1",
+                "activity": "64e5278b82fc786f979af7f0",
                 "category": "Category 1",
                 "area": "Area 1",
                 "date": datetime.utcnow().date(),
-                "accomplishedWorkload": 80,
-                "postedWorkload": 80,
+                "accomplishedWorkload": 10,
             }
         }
 
@@ -69,7 +71,9 @@ class ActivityTypeRequest(BaseModel):
             "example": {
                 "activityId": 1,
                 "dimension": DimensionEnum.teaching,
-                "activityType": "Instrução de oficinas, palestras ou cursos de capacitação certificado pela entidade organizadora.",
+                "activityType": "Instrução de oficinas, palestras ou cursos de "
+                                "capacitação certificado pela entidade "
+                                "organizadora.",
                 "limit": 40,
             }
         }

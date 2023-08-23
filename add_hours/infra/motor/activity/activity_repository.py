@@ -13,14 +13,17 @@ class ActivityRepositoryMotor(IActivityRepository):
     @classmethod
     async def save_activity(cls, activity: Activity):
         activity_db = ActivityMotor(
-            **activity.model_dump(exclude={"_id", "id_", "id", "date", "date_"}),
+            **activity.model_dump(
+                exclude={"_id", "id_", "id", "date", "date_", "activity"}
+            ),
             date_=datetime(
                 day=activity.date_.day,
                 month=activity.date_.month,
                 year=activity.date_.year,
-            )
+            ),
+            activity=ObjectId(activity.activity)
         )
-        await activity_db.save()
+        await activity_db.save_activity()
 
     @classmethod
     async def get_activities(cls, current_page: int, page_size: int):

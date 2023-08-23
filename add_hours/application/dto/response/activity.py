@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from typing import Annotated
+from typing import Annotated, Optional
 
 from bson.objectid import ObjectId
 from pydantic import BaseModel, Field
@@ -11,11 +11,13 @@ class ActivityResponse(BaseModel):
     id_: Annotated[ObjectId, PydanticObjectId] = Field(
         examples=[str(ObjectId())], alias="_id"
     )
-    activity: str = Field(example="Activity 1")
+    activity: str = Field(example="64e5278b82fc786f979af7f0")
     category: str = Field(example="Category 1")
     area: str = Field(example="Area 1")
     date_: date = Field(example=datetime.utcnow().date(), alias="date")
-    accomplished_workload: int = Field(alias="accomplishedWorkload", example=80)
+    accomplished_workload: Optional[int] = Field(
+        alias="accomplishedWorkload", example=80
+    )
     posted_workload: int = Field(alias="postedWorkload", example=80)
 
     class Config:

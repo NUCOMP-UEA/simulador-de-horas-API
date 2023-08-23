@@ -1,10 +1,9 @@
 import os
 from typing import Tuple
 
-from uvicorn.config import logger
-
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from pydantic import AnyUrl, BaseModel, ValidationError
+from uvicorn.config import logger
 
 
 class MongoConnectionConfig(BaseModel):
@@ -36,6 +35,22 @@ class Database:
 
 
 class MotorBaseModel(BaseModel):
+    async def save_activity(self):
+        collection = Database.database[
+            self.__class__.__name__.removesuffix("Motor").lower()
+        ]
+
+        aggregation_result = await self.aggregate([""])
+
+        if not aggregation_result:
+            return False
+
+        await collection.insert_one(
+            self.model_dump(exclude={"_id", "id_", "id"})
+        )
+
+        return True
+
     async def save(self):
         collection = Database.database[
             self.__class__.__name__.removesuffix("Motor").lower()
