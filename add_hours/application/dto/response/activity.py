@@ -32,3 +32,16 @@ class GetActivitiesResponse(BaseModel):
 
     class Config:
         populate_by_name = True
+
+
+class ActivityTypeSearchResponse(BaseModel):
+    id_: Annotated[ObjectId, PydanticObjectId] = Field(
+        examples=[str(ObjectId())], alias="_id"
+    )
+    id_and_dimension: str = Field(alias="idAndDimension", example="1 - Ensino")
+    activity_type: str = Field(
+        alias="activityType", example="Activity type example"
+    )
+
+    class Config:
+        populate_by_name = True

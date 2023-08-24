@@ -9,8 +9,10 @@ from add_hours.utils.pydantic_object_id import PydanticObjectId
 
 
 class Activity(BaseModel):
-    id_: Annotated[ObjectId, PydanticObjectId] = Field(default=None, alias="id")
-    activity: Annotated[ObjectId, PydanticObjectId] | str
+    id_: Annotated[ObjectId, PydanticObjectId] = Field(default=None, alias="_id")
+    activity_type: Annotated[ObjectId, PydanticObjectId] = Field(
+        alias="activityType"
+    )
     category: str
     area: str
     date_: date = Field(alias="date")

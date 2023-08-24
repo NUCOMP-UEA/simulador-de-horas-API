@@ -46,10 +46,17 @@ class MotorBaseModel(BaseModel):
             return False
 
         await collection.insert_one(
-            self.model_dump(exclude={"_id", "id_", "id"})
+            self.model_dump(exclude={"_id", "id_", "id"}, by_alias=True)
         )
 
         return True
+
+    async def save_student(self):
+        collection = Database.database[
+            self.__class__.__name__.removesuffix("Motor").lower()
+        ]
+
+        await collection.insert_one(self.model_dump(by_alias=True))
 
     async def save(self):
         collection = Database.database[
@@ -57,11 +64,11 @@ class MotorBaseModel(BaseModel):
         ]
 
         await collection.insert_one(
-            self.model_dump(exclude={"_id", "id_", "id"})
+            self.model_dump(exclude={"_id", "id_", "id"}, by_alias=True)
         )
 
     @classmethod
-    async def aggregate(cls, pipeline: list):
+    async def aggregate(cls, pipeline: list) -> list[dict]:
         collection = Database.database[
             cls.__name__.removesuffix("Motor").lower()
         ]
@@ -99,9 +106,17 @@ class MotorBaseModel(BaseModel):
                         * int(kwargs["page_size"])
                     )
                     .limit(int(kwargs["page_size"]))
-                    .to_list(100),
+                    .to_list(None),
                     await collection.count_documents({}),
                 )
+
+    @classmethod
+    async def find_all(cls):
+        collection = Database.database[
+            cls.__name__.removesuffix("Motor").lower()
+        ]
+
+        return await collection.find().to_list(None)
 
     @classmethod
     async def find_one(cls, **kwargs) -> dict:

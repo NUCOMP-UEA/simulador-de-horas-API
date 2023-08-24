@@ -14,9 +14,10 @@ class ActivityRepositoryMotor(IActivityRepository):
     async def save_activity(cls, activity: Activity):
         activity_db = ActivityMotor(
             **activity.model_dump(
-                exclude={"_id", "id_", "id", "date", "date_", "activity"}
+                exclude={"_id", "id_", "id", "date", "date_", "activity"},
+                by_alias=True,
             ),
-            date_=datetime(
+            date=datetime(
                 day=activity.date_.day,
                 month=activity.date_.month,
                 year=activity.date_.year,

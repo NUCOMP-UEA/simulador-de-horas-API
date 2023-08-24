@@ -8,3 +8,8 @@ class IActivityTypeRepository(ABC):
     @abstractmethod
     async def save_activity_type(cls, activity_type: ActivityType):
         raise NotImplementedError()
+
+    @classmethod
+    @abstractmethod
+    async def search_activity_type(cls, search: str) -> list[dict]:
+        raise NotImplementedError()

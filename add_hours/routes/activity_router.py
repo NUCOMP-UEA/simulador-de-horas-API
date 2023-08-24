@@ -2,11 +2,9 @@ import os
 from typing import Optional
 
 from fastapi import APIRouter, Query, Response
-from pydantic import Field
 
 from add_hours.application.dto.request.activity import (
     ActivityRequest,
-    ActivityUpdateRequest,
 )
 from add_hours.application.dto.response.activity import (
     GetActivitiesResponse,
@@ -39,5 +37,5 @@ async def delete_activity(activity_id: str):
 
 
 @router_activity.put("/{device_id}", status_code=200)
-async def update_device(device_id: str, update_request: ActivityUpdateRequest):
+async def update_device(device_id: str, update_request: ActivityRequest):
     pass
