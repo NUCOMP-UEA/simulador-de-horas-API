@@ -10,15 +10,15 @@ from add_hours.utils.pydantic_object_id import PydanticObjectId
 
 class ActivityMotor(MotorBaseModel):
     id_: Annotated[ObjectId, PydanticObjectId] = Field(default=None, alias="_id")
-    # TODO: Mudar a função deste campo
-    activity_type: Annotated[ObjectId, PydanticObjectId] = Field(
-        alias="activityType"
-    )
-    category: str
+    student: Annotated[ObjectId, PydanticObjectId]
+    activity: str
+    institution: str
+    category: Annotated[ObjectId, PydanticObjectId]
     area: str
-    date_: datetime = Field(alias="date")
-    accomplished_workload: Optional[int]
-    posted_workload: Optional[int] = None
+    start_date: datetime = Field(alias="startDate")
+    end_date: datetime = Field(alias="endDate")
+    accomplished_workload: Optional[int] = Field(alias="accomplishedWorkload")
+    posted_workload: Optional[int] = Field(alias="postedWorkload")
 
     class Config:
         populate_by_name = True

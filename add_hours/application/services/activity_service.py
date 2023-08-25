@@ -1,5 +1,7 @@
 from typing import Optional, Type
 
+from fastapi import HTTPException
+
 from add_hours.application.dto.request.activity import (
     ActivityRequest,
 )
@@ -24,7 +26,14 @@ class ActivityService:
     async def save_activity(cls, activity_request: ActivityRequest):
         activity = Activity(**activity_request.model_dump())
 
-        await cls.activity_repository.save_activity(activity)
+        response = await cls.activity_repository.save_activity(activity)
+
+        if not response:
+            # TODO: Excessão temporária
+            raise HTTPException(
+                status_code=400,
+                detail="Activity was not added due to surpassing limit",
+            )
 
     @classmethod
     async def get_activities(

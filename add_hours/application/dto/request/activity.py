@@ -10,10 +10,9 @@ from add_hours.utils.pydantic_object_id import PydanticObjectId
 
 class ActivityRequest(BaseModel):
     student: Annotated[ObjectId, PydanticObjectId]
-    activity_type: Annotated[ObjectId, PydanticObjectId] = Field(
-        alias="activityType"
-    )
-    category: str
+    activity: str
+    institution: str
+    category: Annotated[ObjectId, PydanticObjectId]
     area: str
     start_date: date = Field(alias="startDate")
     end_date: date = Field(alias="endDate")
@@ -24,9 +23,11 @@ class ActivityRequest(BaseModel):
         json_schema_extra = {
             "example": {
                 "student": "64e5278b82fc786f979af7f0",
-                "activity": "64e5278b82fc786f979af7f0",
-                "category": "Category 1",
+                "activity": "Activity 1",
+                "institution": "Institution 1",
+                "category": "64e5278b82fc786f979af7f0",
                 "area": "Area 1",
+                # TODO: Validar se as datas estão corretas
                 "startDate": datetime.utcnow().date() - timedelta(days=1),
                 "endDate": datetime.utcnow().date(),
                 "accomplishedWorkload": 10,

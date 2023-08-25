@@ -40,16 +40,9 @@ class MotorBaseModel(BaseModel):
             self.__class__.__name__.removesuffix("Motor").lower()
         ]
 
-        aggregation_result = await self.aggregate([""])
-
-        if not aggregation_result:
-            return False
-
         await collection.insert_one(
             self.model_dump(exclude={"_id", "id_", "id"}, by_alias=True)
         )
-
-        return True
 
     async def save_student(self):
         collection = Database.database[
