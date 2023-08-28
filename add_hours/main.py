@@ -24,3 +24,7 @@ def start():
         host=os.getenv("API_HOST", "localhost"),
         log_level=logging.DEBUG,
     )
+
+
+if __name__ == "__main__":
+    start()
