@@ -1,3 +1,7 @@
+<p align="center">
+  <a href="https://www2.uea.edu.br" target="blank"><img src="add_hours/routes/assets/logo_uea.svg" width="200" alt="Logo Sound Sensor" /></a>
+</p>
+
 <h1 align="center"> Descrição do Projeto </h1>
 
 <p align="center">Simulador de horas complementares para o site do curso de Engenharia de Computação, Sistemas de Informação e Licenciatura em Computação.</p>
@@ -28,5 +32,5 @@ sudo apt install docker-ce
 ### Execução do comando no terminal
 
 ```zsh
-docker build -t sound-sensor-api .
+docker build -t add_hours_api .
 ```
