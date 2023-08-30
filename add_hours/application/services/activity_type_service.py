@@ -1,5 +1,7 @@
 from typing import Optional, Type
 
+from unidecode import unidecode
+
 from add_hours.application.dto.request.activity import ActivityTypeRequest
 from add_hours.application.dto.response.activity import (
     ActivityTypeSearchResponse,
@@ -21,8 +23,14 @@ class ActivityTypeService:
     async def save_activity_type(
         cls, activity_type_request: ActivityTypeRequest
     ):
+        activity_type_response = activity_type_request.activity_type
+        activity_type_request.activity_type = unidecode(
+            activity_type_request.activity_type.lower()
+        )
+
         activity = ActivityType(
-            **activity_type_request.model_dump(by_alias=True)
+            **activity_type_request.model_dump(by_alias=True),
+            activity_type_response=activity_type_response
         )
 
         await cls.activity_type_repository.save_activity_type(activity)
@@ -35,3 +43,11 @@ class ActivityTypeService:
                 await cls.activity_type_repository.search_activity_type(search)
             )
         ]
+
+    @classmethod
+    async def update_activity_type(
+        cls, activity_type_request: ActivityTypeRequest
+    ):
+        activity = ActivityType(
+            **activity_type_request.model_dump(by_alias=True)
+        )

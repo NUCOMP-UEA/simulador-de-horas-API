@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://www2.uea.edu.br" target="blank"><img src="add_hours/routes/assets/logo_uea.svg" width="200" alt="Logo Sound Sensor" /></a>
+  <a href="https://www2.uea.edu.br" target="blank"><img src="add_hours/routes/assets/logo_uea.svg" width="200" alt="Logo UEA" /></a>
 </p>
 
 <h1 align="center"> Descrição do Projeto </h1>
@@ -29,7 +29,7 @@ apt-cache policy docker-ce
 sudo apt install docker-ce
 ```
 
-### Execução do comando no terminal
+### Execução do comando no terminal para criar a imagem da API
 
 ```zsh
 docker build -t add_hours_api .

@@ -29,5 +29,10 @@ async def save_activity_type(activity_type_request: ActivityTypeRequest):
 @router_activity_type.get(
     "/", status_code=200, response_model=list[ActivityTypeSearchResponse]
 )
-async def get_activities(search: Optional[str] = Query(default="Instrução")):
+async def get_activity_types(search: Optional[str] = Query(default="Instrução")):
     return await ActivityTypeService.search_activity_type(search)
+
+
+@router_activity_type.put("/", status_code=200)
+async def update_activity_type(activity_type_request: ActivityTypeRequest):
+    return await ActivityTypeService.update_activity_type(activity_type_request)

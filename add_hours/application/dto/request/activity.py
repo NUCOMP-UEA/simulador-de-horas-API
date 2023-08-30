@@ -1,9 +1,8 @@
 from datetime import date, datetime, timedelta
-from enum import Enum
 from typing import Annotated, Optional
 
 from bson import ObjectId
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, PositiveFloat, PositiveInt
 
 from add_hours.utils.pydantic_object_id import PydanticObjectId
 
@@ -16,7 +15,10 @@ class ActivityRequest(BaseModel):
     area: str
     start_date: date = Field(alias="startDate")
     end_date: date = Field(alias="endDate")
-    accomplished_workload: Optional[int] = Field(alias="accomplishedWorkload")
+    periods: Optional[PositiveInt] = Field(default=None)
+    accomplished_workload: Optional[PositiveInt] = Field(
+        alias="accomplishedWorkload"
+    )
 
     class Config:
         populate_by_name = True
@@ -30,6 +32,7 @@ class ActivityRequest(BaseModel):
                 # TODO: Validar se as datas estão corretas
                 "startDate": datetime.utcnow().date() - timedelta(days=1),
                 "endDate": datetime.utcnow().date(),
+                "periods": 1,
                 "accomplishedWorkload": 10,
             }
         }
@@ -38,10 +41,12 @@ class ActivityRequest(BaseModel):
 class ActivityTypeRequest(BaseModel):
     id_and_dimension: str = Field(alias="idAndDimension")
     activity_type: str = Field(alias="activityType")
-    activity_type_response: str = Field(alias="activityTypeResponse")
-    limit: int
-    multiplying_factor: Optional[float] = Field(alias="multiplyingFactor")
-    hours: Optional[int]
+    limit: PositiveInt
+    multiplying_factor: Optional[PositiveFloat] = Field(
+        alias="multiplyingFactor"
+    )
+    hours: Optional[PositiveInt]
+    is_period_required: bool = Field(alias="isPeriodRequired")
 
     class Config:
         populate_by_name = True
@@ -52,5 +57,6 @@ class ActivityTypeRequest(BaseModel):
                 "limit": 40,
                 "multiplyingFactor": 2.0,
                 "hours": 0,
+                "isPeriodRequired": False,
             }
         }

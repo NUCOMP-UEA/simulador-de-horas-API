@@ -17,6 +17,7 @@ class Activity(BaseModel):
     area: str
     start_date: date = Field(alias="startDate")
     end_date: date = Field(alias="endDate")
+    periods: Optional[int] = Field(default=None)
     accomplished_workload: Optional[int] = Field(alias="accomplishedWorkload")
     posted_workload: Optional[int] = Field(default=None, alias="postedWorkload")
 

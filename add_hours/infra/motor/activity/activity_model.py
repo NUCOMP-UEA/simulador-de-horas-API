@@ -17,6 +17,7 @@ class ActivityMotor(MotorBaseModel):
     area: str
     start_date: datetime = Field(alias="startDate")
     end_date: datetime = Field(alias="endDate")
+    periods: Optional[int] = Field(default=None)
     accomplished_workload: Optional[int] = Field(alias="accomplishedWorkload")
     posted_workload: Optional[int] = Field(alias="postedWorkload")
 

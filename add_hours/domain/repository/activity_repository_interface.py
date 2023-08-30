@@ -11,7 +11,9 @@ class IActivityRepository(ABC):
 
     @classmethod
     @abstractmethod
-    async def get_activities(cls, current_page: int, page_size: int):
+    async def get_activities(
+        cls, student_id: str, current_page: int, page_size: int
+    ):
         raise NotImplementedError()
 
     @classmethod

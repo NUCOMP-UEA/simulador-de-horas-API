@@ -24,9 +24,7 @@ class ActivityResponse(BaseModel):
         alias="startDate", example=datetime.utcnow().date() - timedelta(days=1)
     )
     end_date: date = Field(alias="endDate", example=datetime.utcnow().date())
-    accomplished_workload: Optional[int] = Field(
-        alias="accomplishedWorkload", example=80
-    )
+    accomplished_workload: int = Field(alias="accomplishedWorkload", example=80)
     posted_workload: int = Field(alias="postedWorkload", example=80)
 
     class Config:
@@ -38,6 +36,10 @@ class ActivityResponse(BaseModel):
 class GetActivitiesResponse(BaseModel):
     total_activities: int = Field(alias="totalActivities", example=10)
     activities: list[ActivityResponse]
+    total_posted_workload: int = Field(alias="totalPostedWorkload", example=80)
+    total_accomplished_workload: int = Field(
+        alias="totalAccomplishedWorkload", example=80
+    )
 
     class Config:
         populate_by_name = True

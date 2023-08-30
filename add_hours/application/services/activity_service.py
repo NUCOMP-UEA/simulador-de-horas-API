@@ -24,6 +24,13 @@ class ActivityService:
 
     @classmethod
     async def save_activity(cls, activity_request: ActivityRequest):
+        if activity_request.start_date > activity_request.end_date:
+            # TODO: Excessão temporária
+            raise HTTPException(
+                status_code=400,
+                detail="Incoherent date: start date is greater than end date",
+            )
+
         activity = Activity(**activity_request.model_dump())
 
         response = await cls.activity_repository.save_activity(activity)
@@ -32,12 +39,15 @@ class ActivityService:
             # TODO: Excessão temporária
             raise HTTPException(
                 status_code=400,
-                detail="Activity was not added due to surpassing limit",
+                detail="Activity was not added due to an unknown problem",
             )
 
     @classmethod
     async def get_activities(
-        cls, current_page: Optional[int], page_size: Optional[int]
+        cls,
+        student_id: str,
+        current_page: Optional[int],
+        page_size: Optional[int],
     ) -> GetActivitiesResponse:
         current_page, page_size = await cls._parse_paginate_params(
             current_page, page_size
@@ -46,11 +56,17 @@ class ActivityService:
         (
             response,
             total_activities,
-        ) = await cls.activity_repository.get_activities(current_page, page_size)
+            total_posted_workload,
+            total_accomplished_workload,
+        ) = await cls.activity_repository.get_activities(
+            student_id, current_page, page_size
+        )
 
         return GetActivitiesResponse(
             total_activities=total_activities,
             activities=[ActivityResponse(**activity) for activity in response],
+            total_posted_workload=total_posted_workload,
+            total_accomplished_workload=total_accomplished_workload,
         )
 
     @classmethod

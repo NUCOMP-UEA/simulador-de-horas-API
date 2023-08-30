@@ -22,12 +22,17 @@ async def save_activity(activity_request: ActivityRequest):
     return Response(status_code=201)
 
 
-@router_activity.get("/", status_code=200, response_model=GetActivitiesResponse)
+@router_activity.get(
+    "/{student_id}", status_code=200, response_model=GetActivitiesResponse
+)
 async def get_activities(
+    student_id: str,
     current_page: Optional[int] = Query(default=1, alias="currentPage"),
     page_size: Optional[int] = Query(default=10, alias="pageSize"),
 ):
-    return await ActivityService.get_activities(current_page, page_size)
+    return await ActivityService.get_activities(
+        student_id, current_page, page_size
+    )
 
 
 @router_activity.delete("/{activity_id}", status_code=204)
