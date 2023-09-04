@@ -3,6 +3,7 @@ from datetime import datetime
 from bson.objectid import ObjectId
 
 from add_hours.domain.models.activity.activity import Activity
+from add_hours.domain.models.activity.activity_type import ActivityType
 from add_hours.domain.repository.activity_repository_interface import (
     IActivityRepository,
 )
@@ -43,172 +44,52 @@ class ActivityRepositoryMotor(IActivityRepository):
             student=ObjectId(activity.student)
         )
 
-        activity_type_pipeline = [
-            {"$match": {"_id": ObjectId(activity_db.category)}},
+        if not activity_db.accomplished_workload:
+            activity_db.accomplished_workload = activity_db.posted_workload
+
+        await ActivityMotor.save_activity(activity_db)
+
+    @classmethod
+    async def category_limit_verifier(
+        cls, activity: Activity, activity_type: ActivityType
+    ):
+        posted_workload = await cls._find_posted_workload(
+            activity, activity_type
+        )
+        activity.posted_workload = posted_workload
+
+        activity_pipeline = [
             {
-                "$addFields": {
-                    "posted_workload": {
-                        "$cond": [
-                            {"$eq": ["$hours", None]},
-                            {
-                                "$multiply": [
-                                    "$multiplyingFactor",
-                                    activity_db.accomplished_workload,
-                                ]
-                            },
-                            {
-                                "$cond": [
-                                    {"$ne": ["$isPeriodRequired", False]},
-                                    {
-                                        "$multiply": [
-                                            "$hours",
-                                            activity_db.periods,
-                                        ]
-                                    },
-                                    "$hours",
-                                ]
-                            },
-                        ]
-                    }
+                "$match": {
+                    "student": ObjectId(activity.student),
+                    "category": ObjectId(activity.category),
+                }
+            },
+            {
+                "$group": {
+                    "_id": None,
+                    "posted_workload": {"$sum": "$postedWorkload"},
                 }
             },
             {
                 "$project": {
                     "_id": 0,
                     "posted_workload": {
-                        "$cond": [
-                            {"$lte": ["$posted_workload", "$limit"]},
+                        "$sum": [
                             "$posted_workload",
-                            "$limit",
+                            activity.posted_workload,
                         ]
                     },
                 }
             },
         ]
 
-        activity_type_aggregation_result = await ActivityTypeMotor.aggregate(
-            activity_type_pipeline
-        )
+        new_posted_workload = await ActivityMotor.aggregate(activity_pipeline)
 
-        if activity_type_aggregation_result:
-            activity_db.posted_workload = int(
-                activity_type_aggregation_result[0]["posted_workload"]
-            )
-
-            activity_pipeline = [
-                {
-                    "$match": {
-                        "student": ObjectId(activity_db.student),
-                        "category": ObjectId(activity_db.category),
-                    }
-                },
-                {
-                    "$lookup": {
-                        "from": "activitytype",
-                        "localField": "category",
-                        "foreignField": "_id",
-                        "as": "limit",
-                        "pipeline": [{"$project": {"_id": 0, "limit": 1}}],
-                    }
-                },
-                {"$unwind": "$limit"},
-                {
-                    "$project": {
-                        "_id": 0,
-                        "limit": "$limit.limit",
-                        "postedWorkload": 1,
-                    }
-                },
-                {
-                    "$group": {
-                        "_id": "$limit",
-                        "postedWorkload": {"$sum": "$postedWorkload"},
-                    }
-                },
-                {
-                    "$project": {
-                        "limit": "$_id",
-                        "postedWorkload": {
-                            "$sum": [
-                                "$postedWorkload",
-                                activity_db.posted_workload,
-                            ]
-                        },
-                    }
-                },
-                {
-                    "$project": {
-                        "result": {
-                            "$cond": [
-                                {
-                                    "$lte": [
-                                        "$postedWorkload",
-                                        "$limit",
-                                    ]
-                                },
-                                True,
-                                False,
-                            ]
-                        },
-                        "_id": 0,
-                        "limit": 1,
-                        "postedWorkload": 1,
-                    }
-                },
-            ]
-
-            result_activity = await ActivityMotor.aggregate(activity_pipeline)
-            if result_activity and result_activity[0]["result"] is False:
-                activity_db.posted_workload = abs(
-                    int(result_activity[0]["postedWorkload"])
-                    - activity_db.posted_workload
-                    - int(result_activity[0]["limit"])
-                )
-
-            student = await StudentRepositoryMotor.get_student(
-                str(activity_db.student)
-            )
-
-            course_max = 0
-            if student:
-                course = student["course"]
-
-                if course == "ECP":
-                    course_max = 120
-                elif course == "SI":
-                    course_max = 180
-                else:
-                    course_max = 200
-            else:
-                return False
-
-            total_per_course_pipeline = [
-                {
-                    "$match": {
-                        "student": ObjectId(activity_db.student),
-                    }
-                },
-                {"$group": {"_id": None, "total": {"$sum": "$postedWorkload"}}},
-                {"$project": {"_id": 0, "result": "$total"}},
-            ]
-
-            # TODO: Refatorar daqui para baixo
-            result_total_per_course = await ActivityMotor.aggregate(
-                total_per_course_pipeline
-            )
-
-            if result_total_per_course and course_max < (
-                int(result_total_per_course[0]["result"])
-                + activity_db.posted_workload
-            ):
-                activity_db.posted_workload = abs(
-                    course_max - int(result_total_per_course[0]["result"])
-                )
-
-            if not activity_db.accomplished_workload:
-                activity_db.accomplished_workload = activity_db.posted_workload
-
-            await ActivityMotor.save_activity(activity_db)
+        if (
+            new_posted_workload
+            and new_posted_workload[0]["posted_workload"] > activity_type.limit
+        ):
             return True
         return False
 
@@ -272,5 +153,19 @@ class ActivityRepositoryMotor(IActivityRepository):
         )
 
     @classmethod
-    async def activity_exists(cls, activity_id: str):
-        return ActivityMotor.exists(_id=ObjectId(activity_id))
+    async def _find_posted_workload(
+        cls, activity: Activity, activity_type: ActivityType
+    ):
+        posted_workload = (
+            activity_type.multiplying_factor * activity.accomplished_workload
+            if activity_type.hours is None
+            else activity_type.hours * activity.periods
+            if activity_type.is_period_required is not False
+            else activity_type.hours
+        )
+        posted_workload = (
+            posted_workload
+            if posted_workload <= activity_type.limit
+            else activity_type.limit
+        )
+        return posted_workload

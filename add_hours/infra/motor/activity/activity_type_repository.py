@@ -1,6 +1,6 @@
-import json
 import re
 
+from bson.objectid import ObjectId
 from unidecode import unidecode
 
 from add_hours.domain.models.activity.activity_type import ActivityType
@@ -11,6 +11,16 @@ from add_hours.infra.motor.activity.activity_type_model import ActivityTypeMotor
 
 
 class ActivityTypeRepositoryMotor(IActivityTypeRepository):
+    @classmethod
+    async def activity_type_exists(cls, activity_type_id: str):
+        activity_type_db = await ActivityTypeMotor.find_one(
+            _id=ObjectId(activity_type_id)
+        )
+
+        if not activity_type_db:
+            return False
+        return activity_type_db
+
     @classmethod
     async def save_activity_type(cls, activity_type: ActivityType):
         activity_type_db = ActivityTypeMotor(

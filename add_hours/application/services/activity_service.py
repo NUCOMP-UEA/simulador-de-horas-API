@@ -9,7 +9,11 @@ from add_hours.application.dto.response.activity import (
     ActivityResponse,
     GetActivitiesResponse,
 )
+from add_hours.application.services.activity_type_service import (
+    ActivityTypeService,
+)
 from add_hours.domain.models.activity.activity import Activity
+from add_hours.domain.models.activity.activity_type import ActivityType
 from add_hours.domain.repository.activity_repository_interface import (
     IActivityRepository,
 )
@@ -31,16 +35,51 @@ class ActivityService:
                 detail="Incoherent date: start date is greater than end date",
             )
 
+        activity_type_exists = await ActivityTypeService.activity_type_exists(
+            str(activity_request.category)
+        )
+        if not activity_type_exists:
+            # TODO: Excessão temporária
+            raise HTTPException(
+                status_code=404,
+                detail="Activity Category not found",
+            )
+        activity_type = ActivityType(**activity_type_exists)
         activity = Activity(**activity_request.model_dump())
 
-        response = await cls.activity_repository.save_activity(activity)
-
-        if not response:
+        if (
+            activity_type.hours is None
+            and activity.accomplished_workload is None
+        ):
             # TODO: Excessão temporária
             raise HTTPException(
                 status_code=400,
-                detail="Activity was not added due to an unknown problem",
+                detail="Accomplished workload should not be None while the fixed"
+                " hours for this category is also None",
             )
+
+        if activity_type.is_period_required is None and not activity.periods:
+            # TODO: Excessão temporária
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid field periods for this Activity Category, "
+                "periods field is required",
+            )
+
+        is_greater_than_limit = (
+            await cls.activity_repository.category_limit_verifier(
+                activity, activity_type
+            )
+        )
+
+        if is_greater_than_limit:
+            # TODO: Excessão temporária
+            raise HTTPException(
+                status_code=400,
+                detail="Workload is greater than the Category limit",
+            )
+
+        await cls.activity_repository.save_activity(activity)
 
     @classmethod
     async def get_activities(
@@ -49,10 +88,8 @@ class ActivityService:
         current_page: Optional[int],
         page_size: Optional[int],
     ) -> GetActivitiesResponse:
-        current_page, page_size = await cls._parse_paginate_params(
-            current_page, page_size
-        )
-
+        current_page = 1 if current_page is None else current_page
+        page_size = 10 if page_size is None else page_size
         (
             response,
             total_activities,
@@ -72,14 +109,3 @@ class ActivityService:
     @classmethod
     def delete_activity(cls, activity_id: str):
         pass
-
-    @classmethod
-    async def _parse_paginate_params(
-        cls, current_page: Optional[int], page_size: Optional[int]
-    ):
-        if page_size is None or page_size < 0:
-            page_size = 10
-        if current_page is None or current_page < 1:
-            current_page = 1
-
-        return [current_page, page_size]

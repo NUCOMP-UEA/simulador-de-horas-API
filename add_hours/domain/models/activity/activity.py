@@ -5,6 +5,7 @@ from bson.objectid import ObjectId
 from pydantic.fields import Field
 from pydantic.main import BaseModel
 
+from add_hours.utils.camel_case import to_camel_case
 from add_hours.utils.pydantic_object_id import PydanticObjectId
 
 
@@ -15,11 +16,15 @@ class Activity(BaseModel):
     institution: str
     category: Annotated[ObjectId, PydanticObjectId]
     area: str
-    start_date: date = Field(alias="startDate")
-    end_date: date = Field(alias="endDate")
+    start_date: date
+    end_date: date
     periods: Optional[int] = Field(default=None)
-    accomplished_workload: Optional[int] = Field(alias="accomplishedWorkload")
-    posted_workload: Optional[int] = Field(default=None, alias="postedWorkload")
+    accomplished_workload: Optional[int] = Field()
+    posted_workload: Optional[int] = Field(default=None)
+
+    def dada(self):
+        pass
 
     class Config:
         populate_by_name = True
+        alias_generator = to_camel_case

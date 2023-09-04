@@ -51,3 +51,9 @@ class ActivityTypeService:
         activity = ActivityType(
             **activity_type_request.model_dump(by_alias=True)
         )
+
+    @classmethod
+    async def activity_type_exists(cls, activity_type_id: str):
+        return await cls.activity_type_repository.activity_type_exists(
+            activity_type_id
+        )

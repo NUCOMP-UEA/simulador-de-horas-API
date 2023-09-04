@@ -1,5 +1,5 @@
 import os
-from typing import Optional
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, Query, Response
 
@@ -27,8 +27,8 @@ async def save_activity(activity_request: ActivityRequest):
 )
 async def get_activities(
     student_id: str,
-    current_page: Optional[int] = Query(default=1, alias="currentPage"),
-    page_size: Optional[int] = Query(default=10, alias="pageSize"),
+    current_page: Annotated[Optional[int], Query(gt=0, alias="currentPage")] = 1,
+    page_size: Annotated[Optional[int], Query(gt=0, alias="pageSize")] = 10,
 ):
     return await ActivityService.get_activities(
         student_id, current_page, page_size

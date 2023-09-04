@@ -1,5 +1,5 @@
 import os
-from typing import Optional
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, Query, Response
 
@@ -29,7 +29,9 @@ async def save_activity_type(activity_type_request: ActivityTypeRequest):
 @router_activity_type.get(
     "/", status_code=200, response_model=list[ActivityTypeSearchResponse]
 )
-async def get_activity_types(search: Optional[str] = Query(default="Instrução")):
+async def get_activity_types(
+    search: Annotated[Optional[str], Query()] = "Instrução"
+):
     return await ActivityTypeService.search_activity_type(search)
 
 
