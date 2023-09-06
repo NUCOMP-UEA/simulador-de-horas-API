@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 
@@ -14,7 +15,8 @@ def start():
     path_env = "./config/.env"
     load_dotenv(path_env)
 
-    Database.connect()
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(Database.connect())
 
     init_services()
 

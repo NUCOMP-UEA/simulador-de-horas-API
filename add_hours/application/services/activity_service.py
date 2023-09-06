@@ -12,6 +12,7 @@ from add_hours.application.dto.response.activity import (
 from add_hours.application.services.activity_type_service import (
     ActivityTypeService,
 )
+from add_hours.application.services.student_service import StudentService
 from add_hours.domain.models.activity.activity import Activity
 from add_hours.domain.models.activity.activity_type import ActivityType
 from add_hours.domain.repository.activity_repository_interface import (
@@ -64,6 +65,13 @@ class ActivityService:
                 status_code=400,
                 detail="Invalid field periods for this Activity Category, "
                 "periods field is required",
+            )
+
+        student_exists = await StudentService.get_student(str(activity.student))
+
+        if not student_exists:
+            raise HTTPException(
+                status_code=404, detail="The given student id does not exist"
             )
 
         is_greater_than_limit = (

@@ -1,6 +1,8 @@
+import json
 import os
 from typing import Tuple
 
+from bson.objectid import ObjectId
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from pydantic import AnyUrl, BaseModel, ValidationError
 from uvicorn.config import logger
@@ -15,7 +17,7 @@ class Database:
     database: AsyncIOMotorDatabase = None
 
     @classmethod
-    def connect(cls):
+    async def connect(cls):
         try:
             config_connection = MongoConnectionConfig(
                 host=os.getenv("MONGO_DATABASE_URL")
@@ -32,6 +34,18 @@ class Database:
             )
         except ValidationError as validation_error:
             logger.exception("Invalid database url", exc_info=validation_error)
+
+        with open("./user_mongo.json", "r") as user_file:
+            user = json.load(user_file)
+
+        collection = Database.database["user"]
+        user_exists = await collection.find_one(
+            {"_id": ObjectId(user.get("_id"))}
+        )
+
+        if not user_exists:
+            user["_id"] = ObjectId(user.get("_id"))
+            await collection.insert_one(user)
 
 
 class MotorBaseModel(BaseModel):
