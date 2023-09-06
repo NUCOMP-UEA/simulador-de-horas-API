@@ -36,3 +36,8 @@ sudo apt install docker-ce
 ```zsh
 docker build -t add_hours_api .
 ```
+
+### O próximo passo está no README do seguinte repositório:
+
+* <a href="https://github.com/NUCOMP-UEA/simulador-de-horas-deploy">Repositório de Deploy da aplicação</a>;
+* O arquivo docker-compose.yaml (necessário para subir a aplicação) estará na **raiz do projeto** na branch **main**.
