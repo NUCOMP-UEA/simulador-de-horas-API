@@ -1,25 +1,25 @@
 import os
-from datetime import timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
+from pydantic import SecretStr
 
-from add_hours.application.dto.response.auth import TokenResponse
+from add_hours.application.services.auth_service import AuthService
 
 router_auth = APIRouter(
     prefix=os.getenv("API_AUTH_PREFIX", "/auth"), tags=["Auth"]
 )
 
 
-@router_auth.post("/token", response_model=TokenResponse)
-async def login_for_access_token(
+@router_auth.post("/token")
+async def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
 ):
-    access_token_expires = timedelta(
-        minutes=int(os.getenv("AUTH_EXPIRE_MINUTES"))
+    form_data_is_valid = await AuthService.verify_user(
+        form_data.username, SecretStr(form_data.password)
     )
-    # access_token = create_access_token(
-    #     data={"sub": user.username}, expires_delta=access_token_expires
-    # )
-    # return {"access_token": access_token, "token_type": "bearer"}
+
+    if not form_data_is_valid:
+        # TODO: Exception temporária
+        raise HTTPException(status_code=401, detail="Invalid credentials")

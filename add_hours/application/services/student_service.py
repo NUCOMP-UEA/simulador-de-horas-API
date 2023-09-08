@@ -1,6 +1,7 @@
-from typing import Type
+from typing import Optional, Type
 
 from bson.objectid import ObjectId
+from fastapi import HTTPException
 
 from add_hours.application.dto.request.student import StudentRequest
 from add_hours.application.dto.response.student import StudentResponse
@@ -41,7 +42,20 @@ class StudentService:
         ]
 
     @classmethod
-    async def get_student(cls, student_id: str) -> StudentResponse:
-        return StudentResponse(
-            **(await cls.student_repository.get_student(student_id))
-        )
+    async def get_student(cls, student_id: str) -> Optional[StudentResponse]:
+        if not ObjectId.is_valid(student_id):
+            # TODO: Exception temporária
+            raise HTTPException(status_code=422, detail="Invalid student id")
+
+        student = await cls.student_repository.get_student(student_id)
+
+        if student:
+            return StudentResponse(**student)
+
+    @classmethod
+    async def student_exists(cls, student_id: str):
+        if not ObjectId.is_valid(student_id):
+            # TODO: Exception temporária
+            raise HTTPException(status_code=422, detail="Invalid student id")
+
+        return await cls.student_repository.student_exists(student_id)

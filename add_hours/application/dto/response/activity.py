@@ -1,10 +1,19 @@
 from datetime import date, datetime, timedelta
-from typing import Annotated, Optional
+from typing import Annotated
 
 from bson.objectid import ObjectId
 from pydantic import BaseModel, Field
 
 from add_hours.utils.pydantic_object_id import PydanticObjectId
+
+
+class ActivitySaveResponse(BaseModel):
+    id_: Annotated[ObjectId, PydanticObjectId] = Field(
+        examples=[str(ObjectId())], alias="_id"
+    )
+
+    class Config:
+        populate_by_name = True
 
 
 class ActivityResponse(BaseModel):

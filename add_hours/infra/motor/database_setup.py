@@ -55,7 +55,7 @@ class MotorBaseModel(BaseModel):
         ]
 
         await collection.insert_one(
-            self.model_dump(exclude={"_id", "id_", "id"}, by_alias=True)
+            self.model_dump(by_alias=True)
         )
 
     async def save_student(self):
@@ -82,12 +82,18 @@ class MotorBaseModel(BaseModel):
         if isinstance(pipeline, list):
             return await collection.aggregate(pipeline).to_list(None)
 
-    async def bulk_update(self, id_field, **kwargs):
+    async def update(self, id_field):
         collection = Database.database[
             self.__class__.__name__.removesuffix("Motor").lower()
         ]
 
-        await collection.update_one({"_id": id_field}, {"$set": kwargs})
+        return await collection.update_one(
+            {"_id": id_field}, {
+                "$set": self.model_dump(
+                    by_alias=True, exclude={"_id", "id", "id_"}
+                )
+            }
+        )
 
     @classmethod
     async def delete_one(cls, **kwargs):

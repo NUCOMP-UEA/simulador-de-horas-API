@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from bson.objectid import ObjectId
+from fastapi import HTTPException
 
 from add_hours.domain.models.activity.activity import Activity
 from add_hours.domain.models.activity.activity_type import ActivityType
@@ -8,10 +9,6 @@ from add_hours.domain.repository.activity_repository_interface import (
     IActivityRepository,
 )
 from add_hours.infra.motor.activity.activity_model import ActivityMotor
-from add_hours.infra.motor.activity.activity_type_model import ActivityTypeMotor
-from add_hours.infra.motor.student.student_repository import (
-    StudentRepositoryMotor,
-)
 
 
 class ActivityRepositoryMotor(IActivityRepository):
@@ -20,9 +17,6 @@ class ActivityRepositoryMotor(IActivityRepository):
         activity_db = ActivityMotor(
             **activity.model_dump(
                 exclude={
-                    "_id",
-                    "id_",
-                    "id",
                     "startDate",
                     "endDate",
                     "category",
@@ -87,8 +81,9 @@ class ActivityRepositoryMotor(IActivityRepository):
         new_posted_workload = await ActivityMotor.aggregate(activity_pipeline)
 
         if (
-            new_posted_workload
-            and new_posted_workload[0]["posted_workload"] > activity_type.limit
+                new_posted_workload
+                and new_posted_workload[0][
+            "posted_workload"] > activity_type.limit
         ):
             return True
         return False
@@ -97,6 +92,9 @@ class ActivityRepositoryMotor(IActivityRepository):
     async def get_activities(
         cls, student_id: str, current_page: int, page_size: int
     ):
+        if not ObjectId.is_valid(student_id):
+            raise HTTPException(status_code=422, detail="Invalid ID")
+
         activities_db, total_activities = await ActivityMotor.paginate_database(
             current_page=current_page, page_size=page_size
         )
@@ -151,6 +149,10 @@ class ActivityRepositoryMotor(IActivityRepository):
             total_posted_workload,
             total_accomplished_workload,
         )
+
+    @classmethod
+    async def activity_exists(cls, activity_id: str):
+        return await ActivityMotor.exists(_id=ObjectId(activity_id))
 
     @classmethod
     async def _find_posted_workload(

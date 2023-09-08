@@ -1,12 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
-from fastapi.security import OAuth2PasswordBearer
 from fastapi.staticfiles import StaticFiles
 
 from add_hours.routes.activity_router import router_activity
 from add_hours.routes.activity_type_router import router_activity_type
 from add_hours.routes.auth_router import router_auth
+from add_hours.routes.certificate_router import router_certificate
 from add_hours.routes.student_router import router_student
 
 app = FastAPI()
@@ -21,8 +21,7 @@ app.include_router(router_activity)
 app.include_router(router_activity_type)
 app.include_router(router_student)
 app.include_router(router_auth)
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
+app.include_router(router_certificate)
 
 app.mount(
     "/static/assets",
@@ -45,16 +44,13 @@ app.mount(
 #         swagger_css_url="/static/styles/swagger_ui.css",
 #     )
 
-
 # @app.get(app.swagger_ui_oauth2_redirect_url, include_in_schema=False)
 # async def swagger_ui_redirect():
 #     return get_swagger_ui_oauth2_redirect_html()
 
-
 @app.get("/", include_in_schema=False)
 async def docs_redirect():
     return RedirectResponse(url="/docs")
-
 
 # @app.exception_handler(HTTPException)
 # async def error_parser(request: Request, exc: HTTPException):

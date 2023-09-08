@@ -1,8 +1,8 @@
 import os
 from typing import Annotated, Optional
 
-from fastapi import APIRouter, Query, Response
-
+from fastapi import APIRouter, Depends, Query, Response
+from fastapi.security import OAuth2PasswordBearer
 
 from add_hours.application.dto.request.activity import (
     ActivityTypeRequest,
@@ -19,9 +19,14 @@ router_activity_type = APIRouter(
     tags=["Activity Type"],
 )
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
+
 
 @router_activity_type.post("/", status_code=201)
-async def save_activity_type(activity_type_request: ActivityTypeRequest):
+async def save_activity_type(
+    activity_type_request: ActivityTypeRequest,
+    _: Annotated[str, Depends(oauth2_scheme)],
+):
     await ActivityTypeService.save_activity_type(activity_type_request)
     return Response(status_code=201)
 
@@ -30,11 +35,26 @@ async def save_activity_type(activity_type_request: ActivityTypeRequest):
     "/", status_code=200, response_model=list[ActivityTypeSearchResponse]
 )
 async def get_activity_types(
-    search: Annotated[Optional[str], Query()] = "Instrução"
+    search: Annotated[Optional[str], Query()] = "Instrução",
+
 ):
     return await ActivityTypeService.search_activity_type(search)
 
 
-@router_activity_type.put("/", status_code=200)
-async def update_activity_type(activity_type_request: ActivityTypeRequest):
-    return await ActivityTypeService.update_activity_type(activity_type_request)
+@router_activity_type.put("/{activity_type_id}", status_code=200)
+async def update_activity_type(
+    activity_type_id: str,
+    activity_type_request: ActivityTypeRequest,
+    _: Annotated[str, Depends(oauth2_scheme)],
+):
+    return await ActivityTypeService.update_activity_type(
+        activity_type_id, activity_type_request
+    )
+
+
+@router_activity_type.delete("/{activity_type_id}", status_code=204)
+async def delete_activity_type(
+    activity_type_id: str,
+    _: Annotated[str, Depends(oauth2_scheme)],
+):
+    return await ActivityTypeService.delete_activity_type(activity_type_id)

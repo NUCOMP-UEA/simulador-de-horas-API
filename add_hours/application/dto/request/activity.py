@@ -2,8 +2,9 @@ from datetime import date, datetime, timedelta
 from typing import Annotated, Optional
 
 from bson import ObjectId
-from pydantic import BaseModel, Field, PositiveFloat, PositiveInt
+from pydantic import BaseModel, PositiveFloat, PositiveInt
 
+from add_hours.utils.camel_case import to_camel_case
 from add_hours.utils.pydantic_object_id import PydanticObjectId
 
 
@@ -13,15 +14,14 @@ class ActivityRequest(BaseModel):
     institution: str
     category: Annotated[ObjectId, PydanticObjectId]
     area: str
-    start_date: date = Field(alias="startDate")
-    end_date: date = Field(alias="endDate")
-    periods: Optional[PositiveInt] = Field(default=None)
-    accomplished_workload: Optional[PositiveInt] = Field(
-        alias="accomplishedWorkload"
-    )
+    start_date: date
+    end_date: date
+    periods: Optional[PositiveInt]
+    accomplished_workload: Optional[PositiveInt]
 
     class Config:
         populate_by_name = True
+        alias_generator = to_camel_case
         json_schema_extra = {
             "example": {
                 "student": "64e5278b82fc786f979af7f0",
@@ -39,21 +39,22 @@ class ActivityRequest(BaseModel):
 
 
 class ActivityTypeRequest(BaseModel):
-    id_and_dimension: str = Field(alias="idAndDimension")
-    activity_type: str = Field(alias="activityType")
+    id_and_dimension: str
+    activity_type: str
     limit: PositiveInt
-    multiplying_factor: Optional[PositiveFloat] = Field(
-        alias="multiplyingFactor"
-    )
+    multiplying_factor: Optional[PositiveFloat]
     hours: Optional[PositiveInt]
-    is_period_required: bool = Field(alias="isPeriodRequired")
+    is_period_required: bool
 
     class Config:
         populate_by_name = True
+        alias_generator = to_camel_case
         json_schema_extra = {
             "example": {
                 "idAndDimension": "1 - Ensino",
-                "activityType": "Instrução de oficinas, palestras ou cursos de capacitação certificado pela entidade organizadora.",
+                "activityType": "Instrução de oficinas, palestras ou cursos de "
+                                "capacitação certificado pela entidade "
+                                "organizadora.",
                 "limit": 40,
                 "multiplyingFactor": 2.0,
                 "hours": 0,

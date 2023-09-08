@@ -23,3 +23,8 @@ class IActivityRepository(ABC):
         cls, student_id: str, current_page: int, page_size: int
     ):
         raise NotImplementedError()
+
+    @classmethod
+    @abstractmethod
+    async def activity_exists(cls, activity_id: str):
+        raise NotImplementedError()

@@ -60,3 +60,19 @@ class ActivityTypeRepositoryMotor(IActivityTypeRepository):
         ]
 
         return await ActivityTypeMotor.aggregate(pipeline)
+
+    @classmethod
+    async def update_activity_type(
+        cls, activity_type_id: str, activity_type: ActivityType
+    ):
+        activity_type_db = ActivityTypeMotor(
+            **activity_type.model_dump(
+                by_alias=True, exclude={"_id", "id", "id_"}
+            )
+        )
+
+        await activity_type_db.update(ObjectId(activity_type_id))
+
+    @classmethod
+    async def delete_activity_type(cls, activity_type_id: str):
+        await ActivityTypeMotor.delete_one(_id=ObjectId(activity_type_id))

@@ -3,7 +3,6 @@ import logging
 import os
 
 import uvicorn
-
 from dotenv import load_dotenv
 
 from add_hours.infra.motor.database_setup import Database
@@ -15,17 +14,19 @@ def start():
     path_env = "./config/.env"
     load_dotenv(path_env)
 
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(Database.connect())
-
     init_services()
 
-    uvicorn.run(
-        app,
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(Database.connect())
+
+    config = uvicorn.Config(
+        app=app, loop="auto", log_level=logging.DEBUG,
         port=int(os.getenv("API_PORT", "8000")),
-        host=os.getenv("API_HOST", "localhost"),
-        log_level=logging.DEBUG,
+        host=os.getenv("API_HOST", "localhost")
     )
+    server = uvicorn.Server(config)
+    loop.run_until_complete(server.serve())
 
 
 if __name__ == "__main__":
