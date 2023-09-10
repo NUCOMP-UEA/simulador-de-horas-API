@@ -33,3 +33,13 @@ class IActivityRepository(ABC):
     @abstractmethod
     async def get_activity(cls, activity_id: str):
         raise NotImplementedError()
+
+    @classmethod
+    @abstractmethod
+    async def update_activity(cls, activity: Activity):
+        raise NotImplementedError()
+
+    @classmethod
+    @abstractmethod
+    async def delete_activity(cls, student_id: str, activity_id: str):
+        raise NotImplementedError()

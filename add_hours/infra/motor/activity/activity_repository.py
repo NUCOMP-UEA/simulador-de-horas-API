@@ -82,8 +82,8 @@ class ActivityRepositoryMotor(IActivityRepository):
 
         if (
                 new_posted_workload
-                and new_posted_workload[0][
-            "posted_workload"] > activity_type.limit
+                and
+                new_posted_workload[0]["posted_workload"] > activity_type.limit
         ):
             return True
         return False
@@ -157,6 +157,40 @@ class ActivityRepositoryMotor(IActivityRepository):
     @classmethod
     async def get_activity(cls, activity_id: str):
         return await ActivityMotor.find_one(_id=ObjectId(activity_id))
+
+    @classmethod
+    async def update_activity(cls, activity: Activity):
+        activity_db = ActivityMotor(
+            **activity.model_dump(
+                exclude={
+                    "startDate",
+                    "endDate",
+                    "category",
+                    "student",
+                },
+                by_alias=True,
+            ),
+            start_date=datetime(
+                day=activity.start_date.day,
+                month=activity.start_date.month,
+                year=activity.start_date.year,
+            ),
+            end_date=datetime(
+                day=activity.end_date.day,
+                month=activity.end_date.month,
+                year=activity.end_date.year,
+            ),
+            category=ObjectId(activity.category),
+            student=ObjectId(activity.student)
+        )
+
+        await activity_db.update(activity.id_)
+
+    @classmethod
+    async def delete_activity(cls, student_id: str, activity_id: str):
+        await ActivityMotor.delete_one(
+            _id=ObjectId(activity_id), student=ObjectId(student_id)
+        )
 
     @classmethod
     async def _find_posted_workload(

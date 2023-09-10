@@ -12,14 +12,22 @@ from add_hours.domain.repository.storage_repository_interface import \
 class StorageRepositoryMinio(IStorageRepository):
     @classmethod
     async def save_certificate(
-        cls, certificate_name: str, student_id: str,
+        cls, certificate_name: str, student_id: str, activity_id: str,
         certificate_bytes: io.BytesIO
     ):
         client = await cls._get_client()
 
+        certificates_objects = client.list_objects(
+            bucket_name=os.getenv("MINIO_BUCKET_NAME", "certificates"),
+            prefix=f"{student_id}|{activity_id}"
+        )
+
+        for certificate in certificates_objects:
+            return False
+
         client.put_object(
             os.getenv("MINIO_BUCKET_NAME", "certificates"),
-            f"{student_id}|"
+            f"{student_id}|{activity_id}|"
             f"{datetime.datetime.utcnow().isoformat()}",
             certificate_bytes,
             certificate_bytes.getbuffer().nbytes,
@@ -28,16 +36,18 @@ class StorageRepositoryMinio(IStorageRepository):
             )
         )
 
-    @classmethod
-    async def get_all_certificates(cls, student_id: str) -> io.BytesIO:
-        client = await cls._get_client()
+        return True
 
-        certificates = []
+    @classmethod
+    async def get_all_certificates(cls, student_id: str):
+        client = await cls._get_client()
 
         certificates_objects = client.list_objects(
             bucket_name=os.getenv("MINIO_BUCKET_NAME", "certificates"),
             prefix=f"{student_id}"
         )
+
+        total_certificates = 0
 
         merger = PdfMerger()
         response = None
@@ -51,13 +61,29 @@ class StorageRepositoryMinio(IStorageRepository):
             finally:
                 response.close()
                 response.release_conn()
+            total_certificates += 1
 
         merged_pdfs = io.BytesIO()
 
         merger.write(merged_pdfs)
         merger.close()
 
-        return merged_pdfs
+        return merged_pdfs, total_certificates
+
+    @classmethod
+    async def remove_certificate(cls, student_id: str, activity_id: str):
+        client = await cls._get_client()
+
+        certificates_objects = client.list_objects(
+            bucket_name=os.getenv("MINIO_BUCKET_NAME", "certificates"),
+            prefix=f"{student_id}|{activity_id}"
+        )
+
+        for certificate in certificates_objects:
+            client.remove_object(
+                os.getenv("MINIO_BUCKET_NAME", "certificates"),
+                certificate.object_name
+            )
 
     @classmethod
     async def _get_client(cls) -> Minio:

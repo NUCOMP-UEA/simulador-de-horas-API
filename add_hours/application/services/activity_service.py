@@ -1,10 +1,10 @@
-from typing import Optional, Type
+from typing import Optional, Type, Union
 
 from bson.objectid import ObjectId
 from fastapi import HTTPException
 
 from add_hours.application.dto.request.activity import (
-    ActivityRequest,
+    ActivityRequest, ActivityUpdateRequest,
 )
 from add_hours.application.dto.response.activity import (
     ActivityResponse,
@@ -13,6 +13,7 @@ from add_hours.application.dto.response.activity import (
 from add_hours.application.services.activity_type_service import (
     ActivityTypeService,
 )
+from add_hours.application.services.storage_service import StorageService
 from add_hours.application.services.student_service import StudentService
 from add_hours.domain.models.activity.activity import Activity
 from add_hours.domain.models.activity.activity_type import ActivityType
@@ -36,7 +37,99 @@ class ActivityService:
             # TODO: Exception temporária
             raise HTTPException(status_code=422, detail="Invalid object id")
 
-        if activity_request.start_date > activity_request.end_date:
+        activity = await cls._do_pipelines(activity_request)
+
+        await cls.activity_repository.save_activity(activity)
+
+        return ActivitySaveResponse(id_=activity.id_)
+
+    @classmethod
+    async def get_activities(
+        cls,
+        student_id: str,
+        current_page: Optional[int],
+        page_size: Optional[int],
+    ) -> GetActivitiesResponse:
+        if not ObjectId.is_valid(student_id):
+            # TODO: Exception temporária
+            raise HTTPException(status_code=422, detail="Invalid student id")
+
+        current_page = 1 if current_page is None else current_page
+        page_size = 10 if page_size is None else page_size
+        (
+            response,
+            total_activities,
+            total_posted_workload,
+            total_accomplished_workload,
+        ) = await cls.activity_repository.get_activities(
+            student_id, current_page, page_size
+        )
+
+        return GetActivitiesResponse(
+            total_activities=total_activities,
+            activities=[ActivityResponse(**activity) for activity in response],
+            total_posted_workload=total_posted_workload,
+            total_accomplished_workload=total_accomplished_workload,
+        )
+
+    @classmethod
+    async def delete_activity(cls, student_id: str, activity_id: str):
+        student_exists = await StudentService.student_exists(student_id)
+
+        if not student_exists:
+            raise HTTPException(status_code=404, detail="Student not found")
+
+        activity_exists = await cls.activity_exists(activity_id)
+
+        if not activity_exists:
+            raise HTTPException(status_code=404, detail="Activity not found")
+
+        await cls.activity_repository.delete_activity(student_id, activity_id)
+        await StorageService.remove_certificate(student_id, activity_id)
+
+    @classmethod
+    async def activity_exists(cls, activity_id: str):
+        if not ObjectId.is_valid(activity_id):
+            # TODO: Exception temporária
+            raise HTTPException(status_code=422, detail="Invalid activity id")
+
+        return await cls.activity_repository.activity_exists(activity_id)
+
+    @classmethod
+    async def get_activity(cls, activity_id: str):
+        return ActivityResponse(
+            **(await cls.activity_repository.get_activity(activity_id))
+        )
+
+    @classmethod
+    async def update_activity(
+        cls, student_id: str, activity_id: str,
+        update_request: ActivityUpdateRequest
+    ):
+        student_exists = await StudentService.student_exists(student_id)
+
+        if not student_exists:
+            raise HTTPException(status_code=404, detail="Student not found")
+
+        activity_exists = await cls.activity_exists(activity_id)
+
+        if not activity_exists:
+            raise HTTPException(status_code=404, detail="Activity not found")
+
+        update_request.student = student_id
+        update_request.id_ = activity_id
+
+        activity = await cls._do_pipelines(update_request)
+
+        await cls.activity_repository.update_activity(activity)
+
+        await StorageService.remove_certificate(student_id, activity_id)
+
+    @classmethod
+    async def _do_pipelines(
+        cls, request: Union[ActivityRequest, ActivityUpdateRequest]
+    ):
+        if request.start_date > request.end_date:
             # TODO: Excessão temporária
             raise HTTPException(
                 status_code=400,
@@ -44,7 +137,7 @@ class ActivityService:
             )
 
         activity_type_exists = await ActivityTypeService.activity_type_exists(
-            str(activity_request.category)
+            str(request.category)
         )
         if not activity_type_exists:
             # TODO: Excessão temporária
@@ -54,8 +147,11 @@ class ActivityService:
             )
         activity_type = ActivityType(**activity_type_exists)
 
-        activity_id = ObjectId()
-        activity = Activity(**activity_request.model_dump(), id_=activity_id)
+        if isinstance(request, ActivityRequest):
+            activity_id = ObjectId()
+            activity = Activity(**request.model_dump(), id_=activity_id)
+        else:
+            activity = Activity(**request.model_dump())
 
         if (
                 activity_type.hours is None
@@ -96,55 +192,4 @@ class ActivityService:
                 detail="Workload is greater than the Category limit",
             )
 
-        await cls.activity_repository.save_activity(activity)
-
-        return ActivitySaveResponse(id_=activity_id)
-
-    @classmethod
-    async def get_activities(
-        cls,
-        student_id: str,
-        current_page: Optional[int],
-        page_size: Optional[int],
-    ) -> GetActivitiesResponse:
-        if not ObjectId.is_valid(student_id):
-            # TODO: Exception temporária
-            raise HTTPException(status_code=422, detail="Invalid student id")
-
-        current_page = 1 if current_page is None else current_page
-        page_size = 10 if page_size is None else page_size
-        (
-            response,
-            total_activities,
-            total_posted_workload,
-            total_accomplished_workload,
-        ) = await cls.activity_repository.get_activities(
-            student_id, current_page, page_size
-        )
-
-        return GetActivitiesResponse(
-            total_activities=total_activities,
-            activities=[ActivityResponse(**activity) for activity in response],
-            total_posted_workload=total_posted_workload,
-            total_accomplished_workload=total_accomplished_workload,
-        )
-
-    @classmethod
-    def delete_activity(cls, activity_id: str):
-        if not ObjectId.is_valid(activity_id):
-            # TODO: Exception temporária
-            raise HTTPException(status_code=422, detail="Invalid activity id")
-
-    @classmethod
-    async def activity_exists(cls, activity_id: str):
-        if not ObjectId.is_valid(activity_id):
-            # TODO: Exception temporária
-            raise HTTPException(status_code=422, detail="Invalid activity id")
-
-        return await cls.activity_repository.activity_exists(activity_id)
-
-    @classmethod
-    async def get_activity(cls, activity_id: str):
-        return ActivityResponse(
-            **(await cls.activity_repository.get_activity(activity_id))
-        )
+        return activity

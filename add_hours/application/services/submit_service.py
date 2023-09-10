@@ -51,7 +51,16 @@ class SubmitService:
             )
 
         table_xlsx_file = await create_xlsx(student, get_activities, activities)
-        certificates_pdf = await StorageService.get_certificates(student_id)
+        certificates_pdf, total_certificates = await (
+            StorageService.get_certificates(student_id)
+        )
+
+        if total_certificates != get_activities.total_activities:
+            raise HTTPException(
+                status_code=400,
+                detail="Number of certificates does not match number of "
+                       "registered activities"
+            )
 
         await cls.submit_repository.submit_email(
             student.name, student.enrollment, table_xlsx_file, certificates_pdf

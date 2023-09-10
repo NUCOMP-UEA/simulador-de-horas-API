@@ -2,7 +2,7 @@ from datetime import date, datetime, timedelta
 from typing import Annotated, Optional
 
 from bson import ObjectId
-from pydantic import BaseModel, PositiveFloat, PositiveInt
+from pydantic import BaseModel, Field, PositiveFloat, PositiveInt
 
 from add_hours.utils.camel_case import to_camel_case
 from add_hours.utils.pydantic_object_id import PydanticObjectId
@@ -29,7 +29,39 @@ class ActivityRequest(BaseModel):
                 "institution": "Institution 1",
                 "category": "64e5278b82fc786f979af7f0",
                 "area": "Area 1",
-                # TODO: Validar se as datas estão corretas
+                "startDate": datetime.utcnow().date() - timedelta(days=1),
+                "endDate": datetime.utcnow().date(),
+                "periods": 1,
+                "accomplishedWorkload": 10,
+            }
+        }
+
+
+class ActivityUpdateRequest(BaseModel):
+    id_: Optional[Annotated[ObjectId, PydanticObjectId]] = Field(
+        default=None, alias="_id"
+    )
+    student: Optional[Annotated[ObjectId, PydanticObjectId]] = Field(
+        default=None
+    )
+    activity: str
+    institution: str
+    category: Annotated[ObjectId, PydanticObjectId]
+    area: str
+    start_date: date
+    end_date: date
+    periods: Optional[PositiveInt]
+    accomplished_workload: Optional[PositiveInt]
+
+    class Config:
+        populate_by_name = True
+        alias_generator = to_camel_case
+        json_schema_extra = {
+            "example": {
+                "activity": "Activity 1",
+                "institution": "Institution 1",
+                "category": "64e5278b82fc786f979af7f0",
+                "area": "Area 1",
                 "startDate": datetime.utcnow().date() - timedelta(days=1),
                 "endDate": datetime.utcnow().date(),
                 "periods": 1,

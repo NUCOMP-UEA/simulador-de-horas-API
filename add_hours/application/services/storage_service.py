@@ -3,7 +3,6 @@ from typing import Type
 
 from fastapi import HTTPException
 
-from add_hours.application.services.student_service import StudentService
 from add_hours.domain.repository.storage_repository_interface import \
     IStorageRepository
 
@@ -17,21 +16,26 @@ class StorageService:
 
     @classmethod
     async def save_certificate(
-        cls, certificate_name: str, student_id: str,
+        cls, certificate_name: str, student_id: str, activity_id: str,
         certificate_bytes: io.BytesIO
     ):
-        student_exists = await StudentService.student_exists(student_id)
-
-        if not student_exists:
-            raise HTTPException(status_code=404, detail="Student not found")
-
-        await cls.storage_repository.save_certificate(
-            certificate_name, student_id, certificate_bytes
+        response = await cls.storage_repository.save_certificate(
+            certificate_name, student_id, activity_id, certificate_bytes
         )
+
+        if not response:
+            raise HTTPException(
+                status_code=409,
+                detail="Certificate already issued for this activity and student"
+            )
 
     @classmethod
     async def get_certificates(cls, student_id: str):
-        merged_pdfs = await cls.storage_repository.get_all_certificates(
-            student_id
+        merged_pdfs, total_certificates = await (
+            cls.storage_repository.get_all_certificates(student_id)
         )
-        return merged_pdfs
+        return merged_pdfs, total_certificates
+
+    @classmethod
+    async def remove_certificate(cls, student_id: str, activity_id: str):
+        await cls.storage_repository.remove_certificate(student_id, activity_id)
