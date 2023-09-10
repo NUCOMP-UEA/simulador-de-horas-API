@@ -1,6 +1,6 @@
 from enum import Enum
 
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 
 class CourseEnum(str, Enum):
@@ -12,7 +12,7 @@ class CourseEnum(str, Enum):
 class StudentRequest(BaseModel):
     name: str
     enrollment: str
-    email: str
+    email: EmailStr
     course: CourseEnum
 
     class Config:

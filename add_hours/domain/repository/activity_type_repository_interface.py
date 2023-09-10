@@ -16,6 +16,11 @@ class IActivityTypeRepository(ABC):
 
     @classmethod
     @abstractmethod
+    def get_activity_type_by_id(cls, activity_type_id: str):
+        raise NotImplementedError()
+
+    @classmethod
+    @abstractmethod
     async def activity_type_exists(cls, activity_type_id: str):
         raise NotImplementedError()
 

@@ -6,8 +6,8 @@ from fastapi.staticfiles import StaticFiles
 from add_hours.routes.activity_router import router_activity
 from add_hours.routes.activity_type_router import router_activity_type
 from add_hours.routes.auth_router import router_auth
-from add_hours.routes.certificate_router import router_certificate
 from add_hours.routes.student_router import router_student
+from add_hours.routes.submit_email_router import router_submit
 
 app = FastAPI()
 app.add_middleware(
@@ -20,8 +20,8 @@ app.add_middleware(
 app.include_router(router_activity)
 app.include_router(router_activity_type)
 app.include_router(router_student)
-app.include_router(router_auth)
-app.include_router(router_certificate)
+app.include_router(router_auth, include_in_schema=False)
+app.include_router(router_submit)
 
 app.mount(
     "/static/assets",

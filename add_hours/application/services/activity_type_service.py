@@ -47,6 +47,14 @@ class ActivityTypeService:
         ]
 
     @classmethod
+    async def get_activity_type_by_id(cls, activity_type_id: str):
+        return ActivityTypeSearchResponse(
+            **(await cls.activity_type_repository.get_activity_type_by_id(
+                activity_type_id
+            ))
+        )
+
+    @classmethod
     async def update_activity_type(
         cls, activity_type_id: str, activity_type_request: ActivityTypeRequest
     ):

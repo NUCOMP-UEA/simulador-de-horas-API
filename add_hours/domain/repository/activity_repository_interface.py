@@ -28,3 +28,8 @@ class IActivityRepository(ABC):
     @abstractmethod
     async def activity_exists(cls, activity_id: str):
         raise NotImplementedError()
+
+    @classmethod
+    @abstractmethod
+    async def get_activity(cls, activity_id: str):
+        raise NotImplementedError()

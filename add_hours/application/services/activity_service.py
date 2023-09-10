@@ -142,3 +142,9 @@ class ActivityService:
             raise HTTPException(status_code=422, detail="Invalid activity id")
 
         return await cls.activity_repository.activity_exists(activity_id)
+
+    @classmethod
+    async def get_activity(cls, activity_id: str):
+        return ActivityResponse(
+            **(await cls.activity_repository.get_activity(activity_id))
+        )

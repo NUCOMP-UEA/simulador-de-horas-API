@@ -155,6 +155,10 @@ class ActivityRepositoryMotor(IActivityRepository):
         return await ActivityMotor.exists(_id=ObjectId(activity_id))
 
     @classmethod
+    async def get_activity(cls, activity_id: str):
+        return await ActivityMotor.find_one(_id=ObjectId(activity_id))
+
+    @classmethod
     async def _find_posted_workload(
         cls, activity: Activity, activity_type: ActivityType
     ):

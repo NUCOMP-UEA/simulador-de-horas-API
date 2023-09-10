@@ -22,9 +22,6 @@ class Activity(BaseModel):
     accomplished_workload: Optional[int] = Field()
     posted_workload: Optional[int] = Field(default=None)
 
-    def dada(self):
-        pass
-
     class Config:
         populate_by_name = True
         alias_generator = to_camel_case

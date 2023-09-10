@@ -62,6 +62,21 @@ class ActivityTypeRepositoryMotor(IActivityTypeRepository):
         return await ActivityTypeMotor.aggregate(pipeline)
 
     @classmethod
+    async def get_activity_type_by_id(cls, activity_type_id: str):
+        pipeline = [
+            {"$match": {"_id": ObjectId(activity_type_id)}},
+            {
+                "$project": {
+                    "_id": 1,
+                    "id_and_dimension": "$idAndDimension",
+                    "activity_type": "$activityTypeResponse",
+                }
+            },
+        ]
+
+        return (await ActivityTypeMotor.aggregate(pipeline))[0]
+
+    @classmethod
     async def update_activity_type(
         cls, activity_type_id: str, activity_type: ActivityType
     ):

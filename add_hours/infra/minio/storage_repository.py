@@ -2,6 +2,7 @@ import datetime
 import io
 import os
 
+from PyPDF2 import PdfMerger
 from minio import Minio
 
 from add_hours.domain.repository.storage_repository_interface import \
@@ -11,14 +12,14 @@ from add_hours.domain.repository.storage_repository_interface import \
 class StorageRepositoryMinio(IStorageRepository):
     @classmethod
     async def save_certificate(
-        cls, certificate_name: str, student_id: str, activity_id: str,
+        cls, certificate_name: str, student_id: str,
         certificate_bytes: io.BytesIO
     ):
         client = await cls._get_client()
 
         client.put_object(
             os.getenv("MINIO_BUCKET_NAME", "certificates"),
-            f"{student_id}|{activity_id}|"
+            f"{student_id}|"
             f"{datetime.datetime.utcnow().isoformat()}",
             certificate_bytes,
             certificate_bytes.getbuffer().nbytes,
@@ -28,24 +29,35 @@ class StorageRepositoryMinio(IStorageRepository):
         )
 
     @classmethod
-    async def get_all_certificates(cls, student_id: str, activity_id: str):
+    async def get_all_certificates(cls, student_id: str) -> io.BytesIO:
         client = await cls._get_client()
 
         certificates = []
 
         certificates_objects = client.list_objects(
             bucket_name=os.getenv("MINIO_BUCKET_NAME", "certificates"),
-            prefix=f"{student_id}|{activity_id}"
+            prefix=f"{student_id}"
         )
+
+        merger = PdfMerger()
+        response = None
         for certificate in certificates_objects:
-            certificates.append(
-                client.presigned_get_object(
+            try:
+                response = client.get_object(
                     bucket_name=os.getenv("MINIO_BUCKET_NAME", "certificates"),
                     object_name=certificate.object_name,
-                    expires=datetime.timedelta(hours=1)
                 )
-            )
-        return certificates
+                merger.append(io.BytesIO(response.data))
+            finally:
+                response.close()
+                response.release_conn()
+
+        merged_pdfs = io.BytesIO()
+
+        merger.write(merged_pdfs)
+        merger.close()
+
+        return merged_pdfs
 
     @classmethod
     async def _get_client(cls) -> Minio:

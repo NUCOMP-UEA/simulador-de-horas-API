@@ -28,14 +28,14 @@ async def save_activity(activity_request: ActivityRequest):
 
 
 @router_activity.post(
-    "/certificate/{student_id}/{activity_id}", status_code=201
+    "/certificate/{student_id}", status_code=201
 )
 async def save_certificate(
-    student_id: str, activity_id: str, certificate: UploadFile
+    student_id: str, certificate: UploadFile
 ):
-    if not ObjectId.is_valid(student_id) or not ObjectId.is_valid(activity_id):
+    if not ObjectId.is_valid(student_id):
         # TODO: Excessão temporária
-        raise HTTPException(status_code=422, detail="Invalid object id")
+        raise HTTPException(status_code=422, detail="Invalid student id")
 
     certificate_name = certificate.filename
     if not certificate.content_type == os.getenv(
@@ -44,7 +44,7 @@ async def save_certificate(
         raise HTTPException(status_code=422, detail="Invalid file format")
 
     await StorageService.save_certificate(
-        certificate_name, student_id, activity_id,
+        certificate_name, student_id,
         io.BytesIO(await certificate.read())
     )
 
@@ -61,6 +61,7 @@ async def get_activities(
         student_id, current_page, page_size
     )
 
+# TODO: Apagar o certificado do minio também
 # @router_activity.delete("/{activity_id}", status_code=204)
 # async def delete_activity(activity_id: str):
 #     await ActivityService.delete_activity(activity_id)
