@@ -32,32 +32,43 @@ class ActivityTypeRepositoryMotor(IActivityTypeRepository):
 
     @classmethod
     async def search_activity_type(cls, search: str) -> list[dict]:
-        if search is None:
-            search = ""
+        pipeline = []
+
+        if not search:
+            pipeline = [
+                {"$match": {"_id": {"$exists": True}}},
+                {
+                    "$project": {
+                        "_id": 1,
+                        "id_and_dimension": "$idAndDimension",
+                        "activity_type": "$activityTypeResponse",
+                    }
+                },
+            ]
         else:
             search = re.escape(unidecode(search.lower()))
 
-        pipeline = [
-            {
-                "$addFields": {
-                    "search_result": {
-                        "$regexMatch": {
-                            "input": "$activityType",
-                            "regex": f"(.*?){search}(.*)",
-                            "options": "i",
+            pipeline = [
+                {
+                    "$addFields": {
+                        "search_result": {
+                            "$regexMatch": {
+                                "input": "$activityType",
+                                "regex": f"(.*?){search}(.*)",
+                                "options": "i",
+                            }
                         }
                     }
-                }
-            },
-            {"$match": {"search_result": True}},
-            {
-                "$project": {
-                    "_id": 1,
-                    "id_and_dimension": "$idAndDimension",
-                    "activity_type": "$activityTypeResponse",
-                }
-            },
-        ]
+                },
+                {"$match": {"search_result": True}},
+                {
+                    "$project": {
+                        "_id": 1,
+                        "id_and_dimension": "$idAndDimension",
+                        "activity_type": "$activityTypeResponse",
+                    }
+                },
+            ]
 
         return await ActivityTypeMotor.aggregate(pipeline)
 

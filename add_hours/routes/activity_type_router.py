@@ -35,8 +35,7 @@ async def save_activity_type(
     "/", status_code=200, response_model=list[ActivityTypeSearchResponse]
 )
 async def get_activity_types(
-    search: Annotated[Optional[str], Query()] = "Instrução",
-
+    search: Annotated[Optional[str], Query()] = None,
 ):
     return await ActivityTypeService.search_activity_type(search)
 

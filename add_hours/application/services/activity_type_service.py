@@ -8,6 +8,9 @@ from add_hours.application.dto.request.activity import ActivityTypeRequest
 from add_hours.application.dto.response.activity import (
     ActivityTypeSearchResponse,
 )
+from add_hours.application.exceptions.unprocessable_entity import (
+    InvalidIdUnprocessableEntityDatabase,
+)
 from add_hours.domain.models.activity.activity_type import ActivityType
 from add_hours.domain.repository.activity_type_repository_interface import (
     IActivityTypeRepository,
@@ -49,9 +52,11 @@ class ActivityTypeService:
     @classmethod
     async def get_activity_type_by_id(cls, activity_type_id: str):
         return ActivityTypeSearchResponse(
-            **(await cls.activity_type_repository.get_activity_type_by_id(
-                activity_type_id
-            ))
+            **(
+                await cls.activity_type_repository.get_activity_type_by_id(
+                    activity_type_id
+                )
+            )
         )
 
     @classmethod
@@ -59,8 +64,7 @@ class ActivityTypeService:
         cls, activity_type_id: str, activity_type_request: ActivityTypeRequest
     ):
         if not ObjectId.is_valid(activity_type_id):
-            # TODO: Excessão temporária
-            raise HTTPException(status_code=422, detail="Invalid object id")
+            raise InvalidIdUnprocessableEntityDatabase("Invalid object id")
 
         activity_type_response = activity_type_request.activity_type
         activity_type_request.activity_type = unidecode(
@@ -85,9 +89,6 @@ class ActivityTypeService:
     @classmethod
     async def delete_activity_type(cls, activity_type_id: str):
         if not ObjectId.is_valid(activity_type_id):
-            # TODO: Excessão temporária
-            raise HTTPException(status_code=422, detail="Invalid object id")
+            raise InvalidIdUnprocessableEntityDatabase("Invalid object id")
 
-        await cls.activity_type_repository.delete_activity_type(
-            activity_type_id
-        )
+        await cls.activity_type_repository.delete_activity_type(activity_type_id)
