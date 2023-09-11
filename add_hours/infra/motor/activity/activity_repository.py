@@ -81,9 +81,8 @@ class ActivityRepositoryMotor(IActivityRepository):
         new_posted_workload = await ActivityMotor.aggregate(activity_pipeline)
 
         if (
-                new_posted_workload
-                and
-                new_posted_workload[0]["posted_workload"] > activity_type.limit
+            new_posted_workload
+            and new_posted_workload[0]["posted_workload"] > activity_type.limit
         ):
             return True
         return False
@@ -92,9 +91,6 @@ class ActivityRepositoryMotor(IActivityRepository):
     async def get_activities(
         cls, student_id: str, current_page: int, page_size: int
     ):
-        if not ObjectId.is_valid(student_id):
-            raise HTTPException(status_code=422, detail="Invalid ID")
-
         activities_db, total_activities = await ActivityMotor.paginate_database(
             current_page=current_page, page_size=page_size
         )

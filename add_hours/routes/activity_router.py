@@ -2,15 +2,25 @@ import io
 import os
 from typing import Annotated, Optional
 
-from fastapi import (
-    APIRouter, HTTPException, Query, UploadFile
-)
+from fastapi import APIRouter, HTTPException, Query, UploadFile
 
 from add_hours.application.dto.request.activity import (
-    ActivityRequest, ActivityUpdateRequest,
+    ActivityRequest,
+    ActivityUpdateRequest,
 )
 from add_hours.application.dto.response.activity import (
-    ActivitySaveResponse, GetActivitiesResponse,
+    ActivitySaveResponse,
+    GetActivitiesResponse,
+)
+from add_hours.application.exceptions.bad_request import (
+    IncoherentRequestBodyBadRequest,
+)
+from add_hours.application.exceptions.not_found import (
+    ActivityNotFoundInDatabase,
+    StudentNotFoundInDatabase,
+)
+from add_hours.application.exceptions.unprocessable_entity import (
+    InvalidFileFormatUnprocessableEntity,
 )
 from add_hours.application.services.activity_service import ActivityService
 from add_hours.application.services.storage_service import StorageService
@@ -27,31 +37,31 @@ async def save_activity(activity_request: ActivityRequest):
     return response
 
 
-@router_activity.post(
-    "/certificate/{student_id}/{activity_id}", status_code=201
-)
+@router_activity.post("/certificate/{student_id}/{activity_id}", status_code=201)
 async def save_certificate(
     student_id: str, activity_id: str, certificate: UploadFile
 ):
     student_exists = await StudentService.student_exists(student_id)
 
     if not student_exists:
-        raise HTTPException(status_code=404, detail="Student not found")
+        raise StudentNotFoundInDatabase()
 
     activity_exists = await ActivityService.activity_exists(activity_id)
 
     if not activity_exists:
-        raise HTTPException(status_code=404, detail="Activity not found")
+        raise ActivityNotFoundInDatabase()
 
     certificate_name = certificate.filename
     if not certificate.content_type == os.getenv(
-            "MINIO_SUPPORTED_MIME_TYPE", "application/pdf"
+        "MINIO_SUPPORTED_MIME_TYPE", "application/pdf"
     ):
-        raise HTTPException(status_code=422, detail="Invalid file format")
+        raise InvalidFileFormatUnprocessableEntity("Invalid file format")
 
     await StorageService.save_certificate(
-        certificate_name, student_id, activity_id,
-        io.BytesIO(await certificate.read())
+        certificate_name,
+        student_id,
+        activity_id,
+        io.BytesIO(await certificate.read()),
     )
 
 
@@ -73,16 +83,12 @@ async def update_activity(
     student_id: str, activity_id: str, update_request: ActivityUpdateRequest
 ):
     if update_request.student is not None:
-        # TODO: Excessão temporária
-        raise HTTPException(
-            status_code=400,
-            detail="Cannot change student id in the body of request"
+        raise IncoherentRequestBodyBadRequest(
+            "Cannot change student id in the body of request",
         )
     if update_request.id_ is not None:
-        # TODO: Excessão temporária
-        raise HTTPException(
-            status_code=400,
-            detail="Cannot change activity id in the body of request"
+        raise IncoherentRequestBodyBadRequest(
+            "Cannot change activity id in the body of request",
         )
     await ActivityService.update_activity(
         student_id, activity_id, update_request

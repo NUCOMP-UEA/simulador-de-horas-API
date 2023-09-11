@@ -1,6 +1,6 @@
 import os
 
-from fastapi import APIRouter, Response
+from fastapi import APIRouter
 
 from add_hours.application.dto.request.student import StudentRequest
 from add_hours.application.dto.response.student import StudentResponse

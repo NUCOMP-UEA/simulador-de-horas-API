@@ -5,6 +5,9 @@ from fastapi import HTTPException
 
 from add_hours.application.dto.request.student import StudentRequest
 from add_hours.application.dto.response.student import StudentResponse
+from add_hours.application.exceptions.unprocessable_entity import (
+    InvalidIdUnprocessableEntityDatabase,
+)
 from add_hours.domain.models.student.student import Student
 from add_hours.domain.repository.student_repository_interface import (
     IStudentRepository,
@@ -44,8 +47,7 @@ class StudentService:
     @classmethod
     async def get_student(cls, student_id: str) -> Optional[StudentResponse]:
         if not ObjectId.is_valid(student_id):
-            # TODO: Exception temporária
-            raise HTTPException(status_code=422, detail="Invalid student id")
+            raise InvalidIdUnprocessableEntityDatabase("Invalid student id")
 
         student = await cls.student_repository.get_student(student_id)
 
@@ -55,7 +57,6 @@ class StudentService:
     @classmethod
     async def student_exists(cls, student_id: str):
         if not ObjectId.is_valid(student_id):
-            # TODO: Exception temporária
-            raise HTTPException(status_code=422, detail="Invalid student id")
+            raise InvalidIdUnprocessableEntityDatabase("Invalid student id")
 
         return await cls.student_repository.student_exists(student_id)

@@ -1,8 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+from add_hours.application.exceptions.http_exception import HTTPException
 from add_hours.routes.activity_router import router_activity
 from add_hours.routes.activity_type_router import router_activity_type
 from add_hours.routes.auth_router import router_auth
@@ -48,13 +49,15 @@ app.mount(
 # async def swagger_ui_redirect():
 #     return get_swagger_ui_oauth2_redirect_html()
 
+
 @app.get("/", include_in_schema=False)
 async def docs_redirect():
     return RedirectResponse(url="/docs")
 
-# @app.exception_handler(HTTPException)
-# async def error_parser(request: Request, exc: HTTPException):
-#     return JSONResponse(
-#         status_code=exc.status_code,
-#         content=dict(code=exc.code, message=exc.message),
-#     )
+
+@app.exception_handler(HTTPException)
+async def error_parser(request: Request, exc: HTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=dict(code=exc.code, message=exc.message),
+    )

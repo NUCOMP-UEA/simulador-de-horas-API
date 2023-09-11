@@ -1,10 +1,10 @@
 import io
 from typing import Type
 
-from fastapi import HTTPException
-
-from add_hours.domain.repository.storage_repository_interface import \
-    IStorageRepository
+from add_hours.application.exceptions.conflict import CertificateConflictStorage
+from add_hours.domain.repository.storage_repository_interface import (
+    IStorageRepository,
+)
 
 
 class StorageService:
@@ -16,24 +16,27 @@ class StorageService:
 
     @classmethod
     async def save_certificate(
-        cls, certificate_name: str, student_id: str, activity_id: str,
-        certificate_bytes: io.BytesIO
+        cls,
+        certificate_name: str,
+        student_id: str,
+        activity_id: str,
+        certificate_bytes: io.BytesIO,
     ):
         response = await cls.storage_repository.save_certificate(
             certificate_name, student_id, activity_id, certificate_bytes
         )
 
         if not response:
-            raise HTTPException(
-                status_code=409,
-                detail="Certificate already issued for this activity and student"
+            raise CertificateConflictStorage(
+                "Certificate already issued for this activity and student",
             )
 
     @classmethod
     async def get_certificates(cls, student_id: str):
-        merged_pdfs, total_certificates = await (
-            cls.storage_repository.get_all_certificates(student_id)
-        )
+        (
+            merged_pdfs,
+            total_certificates,
+        ) = await cls.storage_repository.get_all_certificates(student_id)
         return merged_pdfs, total_certificates
 
     @classmethod

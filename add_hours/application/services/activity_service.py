@@ -4,11 +4,25 @@ from bson.objectid import ObjectId
 from fastapi import HTTPException
 
 from add_hours.application.dto.request.activity import (
-    ActivityRequest, ActivityUpdateRequest,
+    ActivityRequest,
+    ActivityUpdateRequest,
 )
 from add_hours.application.dto.response.activity import (
     ActivityResponse,
-    ActivitySaveResponse, GetActivitiesResponse,
+    ActivitySaveResponse,
+    GetActivitiesResponse,
+)
+from add_hours.application.exceptions.bad_request import (
+    IncoherentDateBadRequest,
+    IncoherentFieldBadRequestDatabase,
+)
+from add_hours.application.exceptions.not_found import (
+    ActivityNotFoundInDatabase,
+    ActivityTypeNotFoundInDatabase,
+    StudentNotFoundInDatabase,
+)
+from add_hours.application.exceptions.unprocessable_entity import (
+    InvalidIdUnprocessableEntityDatabase,
 )
 from add_hours.application.services.activity_type_service import (
     ActivityTypeService,
@@ -32,10 +46,9 @@ class ActivityService:
     @classmethod
     async def save_activity(cls, activity_request: ActivityRequest):
         if not ObjectId.is_valid(
-                activity_request.category
+            activity_request.category
         ) or not ObjectId.is_valid(activity_request.student):
-            # TODO: Exception temporária
-            raise HTTPException(status_code=422, detail="Invalid object id")
+            raise InvalidIdUnprocessableEntityDatabase("Invalid object id")
 
         activity = await cls._do_pipelines(activity_request)
 
@@ -51,8 +64,7 @@ class ActivityService:
         page_size: Optional[int],
     ) -> GetActivitiesResponse:
         if not ObjectId.is_valid(student_id):
-            # TODO: Exception temporária
-            raise HTTPException(status_code=422, detail="Invalid student id")
+            raise InvalidIdUnprocessableEntityDatabase("Invalid student id")
 
         current_page = 1 if current_page is None else current_page
         page_size = 10 if page_size is None else page_size
@@ -77,12 +89,12 @@ class ActivityService:
         student_exists = await StudentService.student_exists(student_id)
 
         if not student_exists:
-            raise HTTPException(status_code=404, detail="Student not found")
+            raise StudentNotFoundInDatabase()
 
         activity_exists = await cls.activity_exists(activity_id)
 
         if not activity_exists:
-            raise HTTPException(status_code=404, detail="Activity not found")
+            raise ActivityNotFoundInDatabase()
 
         await cls.activity_repository.delete_activity(student_id, activity_id)
         await StorageService.remove_certificate(student_id, activity_id)
@@ -90,8 +102,7 @@ class ActivityService:
     @classmethod
     async def activity_exists(cls, activity_id: str):
         if not ObjectId.is_valid(activity_id):
-            # TODO: Exception temporária
-            raise HTTPException(status_code=422, detail="Invalid activity id")
+            raise InvalidIdUnprocessableEntityDatabase("Invalid activity id")
 
         return await cls.activity_repository.activity_exists(activity_id)
 
@@ -103,18 +114,20 @@ class ActivityService:
 
     @classmethod
     async def update_activity(
-        cls, student_id: str, activity_id: str,
-        update_request: ActivityUpdateRequest
+        cls,
+        student_id: str,
+        activity_id: str,
+        update_request: ActivityUpdateRequest,
     ):
         student_exists = await StudentService.student_exists(student_id)
 
         if not student_exists:
-            raise HTTPException(status_code=404, detail="Student not found")
+            raise StudentNotFoundInDatabase()
 
         activity_exists = await cls.activity_exists(activity_id)
 
         if not activity_exists:
-            raise HTTPException(status_code=404, detail="Activity not found")
+            raise ActivityNotFoundInDatabase()
 
         update_request.student = student_id
         update_request.id_ = activity_id
@@ -130,21 +143,16 @@ class ActivityService:
         cls, request: Union[ActivityRequest, ActivityUpdateRequest]
     ):
         if request.start_date > request.end_date:
-            # TODO: Excessão temporária
-            raise HTTPException(
-                status_code=400,
-                detail="Incoherent date: start date is greater than end date",
+            raise IncoherentDateBadRequest(
+                "Incoherent date: start date is greater than end date"
             )
 
         activity_type_exists = await ActivityTypeService.activity_type_exists(
             str(request.category)
         )
         if not activity_type_exists:
-            # TODO: Excessão temporária
-            raise HTTPException(
-                status_code=404,
-                detail="Activity Category not found",
-            )
+            raise ActivityTypeNotFoundInDatabase()
+
         activity_type = ActivityType(**activity_type_exists)
 
         if isinstance(request, ActivityRequest):
@@ -154,30 +162,24 @@ class ActivityService:
             activity = Activity(**request.model_dump())
 
         if (
-                activity_type.hours is None
-                and activity.accomplished_workload is None
+            activity_type.hours is None
+            and activity.accomplished_workload is None
         ):
-            # TODO: Excessão temporária
-            raise HTTPException(
-                status_code=400,
-                detail="Accomplished workload should not be None while the fixed"
-                       " hours for this category is also None",
+            raise IncoherentFieldBadRequestDatabase(
+                "Accomplished workload should not be None while the fixed"
+                " hours for this category is also None",
             )
 
         if activity_type.is_period_required is None and not activity.periods:
-            # TODO: Excessão temporária
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid field periods for this Activity Category, "
-                       "periods field is required",
+            raise IncoherentFieldBadRequestDatabase(
+                "Invalid field periods for this Activity Category, "
+                "periods field is required",
             )
 
         student_exists = await StudentService.get_student(str(activity.student))
 
         if not student_exists:
-            raise HTTPException(
-                status_code=404, detail="The given student id does not exist"
-            )
+            raise StudentNotFoundInDatabase()
 
         is_greater_than_limit = (
             await cls.activity_repository.category_limit_verifier(
@@ -186,10 +188,8 @@ class ActivityService:
         )
 
         if is_greater_than_limit:
-            # TODO: Excessão temporária
-            raise HTTPException(
-                status_code=400,
-                detail="Workload is greater than the Category limit",
+            raise IncoherentFieldBadRequestDatabase(
+                "Workload is greater than the Category limit",
             )
 
         return activity
