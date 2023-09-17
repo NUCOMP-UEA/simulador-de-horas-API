@@ -111,7 +111,8 @@ class MotorBaseModel(BaseModel):
         ]
 
         if isinstance(kwargs, dict):
-            if "current_page" in kwargs and "page_size" in kwargs:
+            if ("current_page" in kwargs and "page_size" in kwargs and
+                    "student_id" in kwargs):
                 return (
                     await collection.find(
                         {"student": ObjectId(kwargs.get("student_id"))}

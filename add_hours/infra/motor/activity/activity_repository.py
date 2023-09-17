@@ -132,13 +132,13 @@ class ActivityRepositoryMotor(IActivityRepository):
             for total in total_accomplished_workload
         )
 
+        if not total_activities:
+            total_activities = 0
         if not total_posted_workload:
             total_posted_workload = 0
         if not total_accomplished_workload:
             total_accomplished_workload = 0
-
-        if not activities_db:
-            return [], 0
+            
         return (
             activities_db,
             total_activities,
