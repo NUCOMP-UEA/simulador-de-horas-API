@@ -123,7 +123,9 @@ class MotorBaseModel(BaseModel):
                     )
                     .limit(int(kwargs["page_size"]))
                     .to_list(None),
-                    await collection.count_documents({}),
+                    await collection.count_documents(
+                        {"student": ObjectId(kwargs.get("student_id"))}
+                    ),
                 )
 
     @classmethod
