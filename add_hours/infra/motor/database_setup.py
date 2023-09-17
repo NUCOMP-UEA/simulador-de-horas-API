@@ -113,7 +113,9 @@ class MotorBaseModel(BaseModel):
         if isinstance(kwargs, dict):
             if "current_page" in kwargs and "page_size" in kwargs:
                 return (
-                    await collection.find()
+                    await collection.find(
+                        {"student": ObjectId(kwargs.get("student_id"))}
+                    )
                     .skip(
                         (int(kwargs["current_page"]) - 1)
                         * int(kwargs["page_size"])

@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from bson.objectid import ObjectId
-from fastapi import HTTPException
 
 from add_hours.domain.models.activity.activity import Activity
 from add_hours.domain.models.activity.activity_type import ActivityType
@@ -81,8 +80,9 @@ class ActivityRepositoryMotor(IActivityRepository):
         new_posted_workload = await ActivityMotor.aggregate(activity_pipeline)
 
         if (
-            new_posted_workload
-            and new_posted_workload[0]["posted_workload"] > activity_type.limit
+                new_posted_workload
+                and new_posted_workload[0][
+            "posted_workload"] > activity_type.limit
         ):
             return True
         return False
@@ -92,7 +92,7 @@ class ActivityRepositoryMotor(IActivityRepository):
         cls, student_id: str, current_page: int, page_size: int
     ):
         activities_db, total_activities = await ActivityMotor.paginate_database(
-            current_page=current_page, page_size=page_size
+            student_id=student_id, current_page=current_page, page_size=page_size
         )
 
         activity_total_posted_workload_pipeline = [
