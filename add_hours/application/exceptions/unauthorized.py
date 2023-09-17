@@ -13,3 +13,8 @@ class InvalidCredentials(Unauthorized):
 class InvalidUser(Unauthorized):
     message = "Unauthorized user"
     code = "unauthorized.invalidUser"
+
+
+class InvalidEmailDomain(Unauthorized):
+    message = "Email domain is outside of UEA"
+    code = "unauthorized.invalidEmailDomain"

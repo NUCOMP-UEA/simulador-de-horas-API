@@ -62,6 +62,7 @@ class ActivityTypeSearchResponse(BaseModel):
     activity_type: str = Field(
         alias="activityType", example="Activity type example"
     )
+    is_period_required: bool = Field(alias="isPeriodRequired", example=False)
 
     class Config:
         populate_by_name = True

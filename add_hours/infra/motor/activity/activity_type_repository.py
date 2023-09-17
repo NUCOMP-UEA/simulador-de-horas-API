@@ -42,6 +42,7 @@ class ActivityTypeRepositoryMotor(IActivityTypeRepository):
                         "_id": 1,
                         "id_and_dimension": "$idAndDimension",
                         "activity_type": "$activityTypeResponse",
+                        "is_period_required": "$isPeriodRequired"
                     }
                 },
             ]
@@ -66,6 +67,7 @@ class ActivityTypeRepositoryMotor(IActivityTypeRepository):
                         "_id": 1,
                         "id_and_dimension": "$idAndDimension",
                         "activity_type": "$activityTypeResponse",
+                        "is_period_required": "$isPeriodRequired"
                     }
                 },
             ]
@@ -81,6 +83,7 @@ class ActivityTypeRepositoryMotor(IActivityTypeRepository):
                     "_id": 1,
                     "id_and_dimension": "$idAndDimension",
                     "activity_type": "$activityTypeResponse",
+                    "is_period_required": "$isPeriodRequired"
                 }
             },
         ]
