@@ -291,4 +291,3 @@ pyrightconfig.json
 docker-compose.yaml
 /config
 /mongo
-user_mongo.json
